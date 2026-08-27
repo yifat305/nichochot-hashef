@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { HeroFilm } from "@/components/HeroFilm";
 import { OrderBuilder } from "@/components/OrderBuilder";
+import { WhatsAppFab } from "@/components/WhatsAppFab";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -21,6 +22,7 @@ function Index() {
     <main dir="rtl" lang="he" className="min-h-[100dvh] bg-background text-foreground">
       <HeroFilm />
       <OrderBuilder />
+      <WhatsAppFab />
     </main>
   );
 }
