@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown, Minus, Plus, Search, X } from "lucide-react";
+import { Check, Minus, Plus, Search, ShoppingBasket, X } from "lucide-react";
 import {
   ALL_TABLES, ASSETS, BOTTLE_SPARE, COLORS, DESSERT_SPARE, EMAIL, EVENT_TYPES,
   GUESTS_PER_BOTTLE, Item, MENU, MIN_GUESTS, PHONE, PORCELAIN_TABLE, PROGRAMS,
@@ -324,6 +324,12 @@ export function OrderBuilder() {
 
   const setD = (k: keyof typeof details, v: string) => setDetails((p) => ({ ...p, [k]: v }));
 
+  /* מה שכבר בסל — לתג על הכפתור הצף */
+  const chosenCount = useMemo(
+    () => rows.reduce((n, r) => n + r.names.length, 0) + addons.length,
+    [rows, addons],
+  );
+
   /* ============================================================ */
   return (
     <>
@@ -620,10 +626,37 @@ export function OrderBuilder() {
         </div>
       </section>
 
+      {/* כפתור הסל הצף — נספר בו כמה פריטים כבר נבחרו */}
+      <button
+        type="button"
+        onClick={() => setSheetOpen(true)}
+        aria-label={`סל ההזמנה — ${chosenCount} פריטים`}
+        className={`fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] end-[clamp(1rem,5vw,3rem)] z-40 grid h-14 w-14 place-items-center rounded-full border border-border bg-background/90 shadow-[0_10px_30px_rgba(0,0,0,.45)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-[#f0d795] ${
+          sheetOpen ? "pointer-events-none scale-90 opacity-0" : "opacity-100"
+        }`}
+      >
+        <ShoppingBasket className="h-6 w-6" strokeWidth={1.6} />
+        {chosenCount > 0 && (
+          <span className="absolute -end-1 -top-1 grid min-w-[22px] place-items-center rounded-full bg-[#f0d795] px-1.5 text-[.72rem] font-medium tabular-nums text-background">
+            {chosenCount}
+          </span>
+        )}
+      </button>
+
       {/* סרגל הסיכום + סל ההזמנה */}
       <div className="fixed inset-x-0 bottom-0 z-40 rounded-t-[20px] border-t border-border bg-background/95 px-[clamp(1rem,5vw,3rem)] py-4 backdrop-blur-xl">
         {sheetOpen && (
           <div className="mb-4 max-h-[min(58vh,540px)] overflow-y-auto border-b border-border pb-4">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <span className="flex items-center gap-2.5 text-[.95rem] font-medium">
+                <ShoppingBasket className="h-5 w-5" strokeWidth={1.6} />
+                סל ההזמנה
+              </span>
+              <button type="button" onClick={() => setSheetOpen(false)} aria-label="סגירת הסל"
+                className="grid h-8 w-8 place-items-center rounded-full border border-border transition hover:bg-foreground hover:text-background">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
             <div className="flex flex-col gap-[1.1rem]">
               {[["שם", details.name], ["אירוע", eventType()],
                 ["תאריך", details.date ? dateHe(details.date) + (details.time ? ` · ${details.time}` : "") : ""],
@@ -683,18 +716,14 @@ export function OrderBuilder() {
         )}
 
         <div className="flex items-center justify-between gap-4">
-          <button type="button" onClick={() => setSheetOpen((v) => !v)} aria-expanded={sheetOpen}
-            className="flex items-center gap-2 text-start">
-            <span className="flex flex-col">
-              <b className="text-[clamp(1.3rem,3.4vw,1.9rem)] font-medium tabular-nums">{money(totals.total)}</b>
-              <span className="text-[.78rem] text-muted-foreground">
-                <span className="inline-block [direction:ltr]">{money(totals.perGuest)} × {guests}</span> סועדים
-                {totals.units > 0 && ` · תוספות ${money(totals.units)}`}
-                {program === "shabbat" && " · שבת"}
-              </span>
+          <span className="flex flex-col">
+            <b className="text-[clamp(1.3rem,3.4vw,1.9rem)] font-medium tabular-nums">{money(totals.total)}</b>
+            <span className="text-[.78rem] text-muted-foreground">
+              <span className="inline-block [direction:ltr]">{money(totals.perGuest)} × {guests}</span> סועדים
+              {totals.units > 0 && ` · תוספות ${money(totals.units)}`}
+              {program === "shabbat" && " · שבת"}
             </span>
-            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${sheetOpen ? "rotate-180" : ""}`} />
-          </button>
+          </span>
 
           <a
             href={missing.length ? undefined : `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(orderText())}`}
