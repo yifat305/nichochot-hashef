@@ -18,6 +18,7 @@ s.innerHTML = `
     <video class="film" playsinline muted loop preload="none"
            poster="video/poster.webp" src="video/pastel-${SET}.mp4" aria-hidden="true"></video>
     <div class="shade"></div>
+    <div class="logo-glow" aria-hidden="true"></div>
     <img class="brand-logo" src="img/brand/logo.webp" alt="ניחוחות השף — קייטרינג ואירוח">
     <div class="ui">
       <h1 class="title">סיגר בשר</h1>

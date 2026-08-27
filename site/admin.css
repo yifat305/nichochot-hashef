@@ -1,0 +1,185 @@
+/* ============================================================
+   פאנל ניהול הזמנות
+   ============================================================ */
+.admin-page{min-height:100dvh}
+#admin{width:min(1180px,92vw);margin-inline:auto;padding-block:clamp(2rem,6vh,4rem) 6rem}
+
+/* ---------- מסך כניסה ---------- */
+.gate{
+  min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:1.6rem;text-align:center;
+}
+.gate-logo{height:clamp(100px,16vh,150px);width:auto}
+.gate h1{font-weight:300;font-size:clamp(1.6rem,4vw,2.4rem);letter-spacing:-.01em}
+.gate-form{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center}
+.gate-form input{
+  background:transparent;border:1px solid var(--line);border-radius:100px;
+  color:var(--cream);font-family:inherit;font-size:1.1rem;letter-spacing:.3em;
+  padding:.85rem 1.6rem;text-align:center;width:14rem;
+}
+.gate-form input:focus{outline:0;border-color:var(--cream)}
+.gate-form button{
+  background:var(--cream);color:var(--ink);border:0;border-radius:100px;
+  font-family:inherit;font-weight:500;font-size:.95rem;padding:.85rem 2rem;cursor:pointer;
+  transition:opacity .25s;
+}
+.gate-form button:hover{opacity:.9}
+.gate-err{color:#e57373;font-size:.88rem}
+
+/* ---------- כותרת ---------- */
+.ad-top{
+  display:flex;flex-wrap:wrap;align-items:center;gap:1.4rem 2rem;
+  padding-block-end:1.6rem;border-block-end:1px solid var(--line);
+}
+.ad-logo{height:74px;width:auto;flex:none}
+.ad-stats{display:flex;gap:2.2rem;flex:1}
+.ad-stats b{display:block;font-size:clamp(1.3rem,3vw,1.8rem);font-weight:500;font-variant-numeric:tabular-nums}
+.ad-stats span{font-size:.76rem;letter-spacing:.1em;color:var(--dim)}
+.ad-out{
+  flex:none;background:transparent;border:1px solid var(--line);border-radius:100px;
+  color:var(--cream);font-family:inherit;font-size:.86rem;padding:.55rem 1.3rem;cursor:pointer;
+  transition:all .25s;
+}
+.ad-out:hover{background:var(--cream);color:var(--ink);border-color:var(--cream)}
+
+/* ---------- חיפוש ומיון ---------- */
+.ad-bar{display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;margin-block:1.8rem 1.4rem}
+#q{
+  flex:1;min-width:240px;background:transparent;border:1px solid var(--line);border-radius:100px;
+  color:var(--cream);font-family:inherit;font-size:.95rem;padding:.7rem 1.3rem;
+}
+#q:focus{outline:0;border-color:var(--cream)}
+.ad-sort{display:flex;gap:.5rem;flex-wrap:wrap}
+.ad-sort button{
+  background:transparent;border:1px solid var(--line);border-radius:100px;
+  color:var(--dim);font-family:inherit;font-size:.84rem;padding:.55rem 1.1rem;cursor:pointer;
+  transition:all .25s;
+}
+.ad-sort button:hover{border-color:rgba(244,239,230,.4);color:var(--cream)}
+.ad-sort button.on{background:var(--cream);border-color:var(--cream);color:var(--ink);font-weight:500}
+
+.ad-empty{color:var(--dim);padding-block:3rem;text-align:center}
+
+/* ---------- רשימת ההזמנות ---------- */
+.ad-list{display:flex;flex-direction:column;gap:.7rem}
+.ad-card{border:1px solid var(--line);border-radius:14px;overflow:hidden;transition:border-color .25s}
+.ad-card:hover{border-color:rgba(244,239,230,.34)}
+.ad-card.past{opacity:.55}
+
+.ad-head{
+  width:100%;display:grid;align-items:center;gap:1rem;
+  grid-template-columns:minmax(120px,.8fr) minmax(160px,1.6fr) minmax(110px,.8fr) 22px;
+  background:transparent;border:0;color:var(--cream);font-family:inherit;text-align:start;
+  padding:1.1rem 1.2rem;cursor:pointer;transition:background .25s;
+}
+.ad-head:hover{background:rgba(244,239,230,.05)}
+.ad-head b{display:block;font-weight:500;font-size:1rem}
+.ad-head i{display:block;font-style:normal;font-size:.78rem;color:var(--dim);margin-block-start:.15rem}
+.ad-when b{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate;display:inline-block}
+.ad-sum{text-align:start}
+.ad-sum b{font-variant-numeric:tabular-nums}
+.ad-chev{
+  justify-self:end;width:9px;height:9px;
+  border-inline-start:1.5px solid var(--dim);border-block-end:1.5px solid var(--dim);
+  transform:rotate(-45deg);transition:transform .3s;
+}
+.ad-head.open .ad-chev{transform:rotate(135deg)}
+
+@media (max-width:700px){
+  .ad-head{grid-template-columns:1fr 22px;gap:.7rem}
+  .ad-chev{grid-row:1;grid-column:2}
+}
+
+/* ---------- גוף ההזמנה ---------- */
+.ad-body{border-block-start:1px solid var(--line);padding:1.3rem 1.2rem;background:rgba(244,239,230,.03)}
+.ad-facts{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:.9rem 1.4rem;margin-block-end:1.4rem;
+}
+.ad-facts dt{font-size:.72rem;letter-spacing:.1em;color:var(--dim)}
+.ad-facts dd{font-size:.92rem;margin-block-start:.2rem}
+
+.ad-menu{display:flex;flex-direction:column;gap:.85rem;padding-block:1.2rem;border-block:1px solid var(--line)}
+.ad-grp h4{font-size:.76rem;letter-spacing:.1em;color:var(--dim);font-weight:400;margin-block-end:.25rem}
+.ad-grp p{font-size:.92rem;line-height:1.6}
+
+.ad-acts{display:flex;flex-wrap:wrap;gap:.6rem;margin-block-start:1.2rem}
+.ad-acts button,.ad-tools button{
+  background:transparent;border:1px solid var(--line);border-radius:100px;
+  color:var(--cream);font-family:inherit;font-size:.85rem;padding:.55rem 1.2rem;cursor:pointer;
+  transition:all .25s;
+}
+.ad-acts button:hover,.ad-tools button:hover{background:var(--cream);color:var(--ink);border-color:var(--cream)}
+.ad-acts .danger,.ad-tools .danger{color:#e57373;border-color:rgba(229,115,115,.35)}
+.ad-acts .danger:hover,.ad-tools .danger:hover{background:#e57373;color:var(--ink);border-color:#e57373}
+
+.ad-tools{display:flex;flex-wrap:wrap;gap:.6rem;margin-block-start:2.4rem;padding-block-start:1.6rem;border-block-start:1px solid var(--line)}
+
+/* ---------- סינון לפי מצב ---------- */
+.ad-filters{display:flex;flex-wrap:wrap;gap:.5rem;margin-block-start:1.8rem}
+.ad-filters button{
+  display:flex;align-items:center;gap:.5rem;
+  background:transparent;border:1px solid var(--line);border-radius:100px;
+  color:var(--dim);font-family:inherit;font-size:.86rem;padding:.5rem 1.1rem;cursor:pointer;
+  transition:all .25s;
+}
+.ad-filters button em{
+  font-style:normal;font-size:.72rem;font-variant-numeric:tabular-nums;
+  background:rgba(244,239,230,.12);border-radius:100px;padding:.05rem .45rem;
+}
+.ad-filters button:hover{border-color:rgba(244,239,230,.4);color:var(--cream)}
+.ad-filters button.on{background:var(--cream);border-color:var(--cream);color:var(--ink);font-weight:500}
+.ad-filters button.on em{background:rgba(11,12,14,.15)}
+.ad-filters .f-progress.on{background:#e0a765;border-color:#e0a765}
+.ad-filters .f-done.on{background:#8fce9b;border-color:#8fce9b}
+
+/* ---------- סימוני מצב על הכרטיס ---------- */
+.ad-card{position:relative;display:flex;flex-direction:column}
+.ad-marks{
+  position:absolute;inset-inline-start:.85rem;inset-block-start:.95rem;z-index:2;
+  display:flex;gap:.4rem;
+}
+.mark{
+  width:26px;height:26px;border-radius:50%;
+  background:transparent;border:1px solid var(--line);cursor:pointer;
+  display:grid;place-items:center;transition:all .25s;
+}
+.mark:hover{border-color:rgba(244,239,230,.5)}
+.mark:focus-visible{outline:2px solid var(--cream);outline-offset:2px}
+.mk-dot{width:8px;height:8px;border-radius:50%;background:var(--dim);transition:background .25s}
+.mark-prog.on{background:#e0a765;border-color:#e0a765}
+.mark-prog.on .mk-dot{background:#2a1c08}
+/* הוי פיזי — אייקון לא משתקף ב-RTL */
+.mk-v{
+  width:9px;height:5px;transform:rotate(-45deg) translateY(-1px);
+  border-left:1.6px solid var(--dim);border-bottom:1.6px solid var(--dim);
+  transition:border-color .25s;
+}
+.mark-done.on{background:#8fce9b;border-color:#8fce9b}
+.mark-done.on .mk-v{border-left-color:#0d2a12;border-bottom-color:#0d2a12}
+
+.ad-head{padding-inline-start:4.6rem}
+
+.ad-badge{
+  justify-self:end;font-size:.7rem;letter-spacing:.08em;
+  border:1px solid var(--line);border-radius:100px;padding:.2rem .7rem;color:var(--dim);
+}
+.st-prog .ad-badge{border-color:#e0a765;color:#e0a765}
+.st-done .ad-badge{border-color:#8fce9b;color:#8fce9b}
+.st-done .ad-head b{text-decoration:line-through;text-decoration-color:rgba(143,206,155,.5)}
+.st-prog{border-color:rgba(224,167,101,.35)}
+.st-done{border-color:rgba(143,206,155,.3)}
+
+@media (max-width:700px){
+  .ad-head{grid-template-columns:1fr 22px;padding-inline-start:1.2rem;padding-block-start:2.9rem}
+  .ad-marks{inset-block-start:.7rem}
+  .ad-badge{justify-self:start}
+}
+
+/* ---------- שמירה ביומן ---------- */
+.act-cal{
+  text-decoration:none;border:1px solid var(--line);border-radius:100px;
+  color:var(--cream);font-size:.85rem;padding:.55rem 1.2rem;transition:all .25s;
+}
+.act-cal:hover{background:var(--gold-lt);border-color:var(--gold-lt);color:var(--ink)}
+.act-cal:focus-visible{outline:2px solid var(--cream);outline-offset:2px}

@@ -9,6 +9,15 @@
 
 const CURRENCY = '₪';
 const MIN_GUESTS = 20;
+/* --- סוגי אירוע --- */
+const EVENT_TYPES = [
+  'בר מצווה', 'בת מצווה', 'ברית', 'בריתה',
+  'שבת חתן', 'אירוסין', 'אזכרה', 'אחר',
+];
+
+const ORDERS_KEY = 'nichochot-orders';
+const ADMIN_PIN  = '2809';
+
 const PHONE    = '053-443-5123';
 const WHATSAPP = '972534435123';
 const EMAIL    = 'Y0534435123@gmail.com';
@@ -170,6 +179,12 @@ const PROGRAMS = {
       { id: 'liquor', name: 'שתייה חריפה', price: 20 },
     ],
   },
+};
+
+/* --- עריכת שולחן שמחייבת חבילת פורצלן --- */
+const PORCELAIN_TABLE = {
+  id: 'porcelain', name: 'פורצלן', note: 'כלים וסכו״ם מוזהב',
+  img: 'img/tables/porcelain.webp', requiresPkg: 3,
 };
 
 /* --- עריכות שולחן מוכנות --- */

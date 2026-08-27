@@ -16,6 +16,7 @@ const state = {
   qty:   {},                  /* key → {id:n} (mode qty) */
   addons: new Set(),
   table: { mode: 'preset', preset: null, colors: new Set(), text: '' },
+  details: { name: '', date: '', time: '', place: '', type: '', typeOther: '' },
 };
 
 const prog   = () => PROGRAMS[state.program];
@@ -170,6 +171,7 @@ function buildMenu() {
 
   prog().groups.forEach(g => {
     const box = el('div', 'grp');
+    box.id = 'sec-' + g.key;
     if (g.needs) box.dataset.needs = g.needs;
 
     if (g.meal) box.appendChild(el('h2', 'meal-title', g.meal));
@@ -231,6 +233,72 @@ function buildMenu() {
   }
 }
 
+/* ---------- תפריט ניווט ---------- */
+function buildNav() {
+  const host = document.getElementById('navHost');
+  const p = pkgOf();
+
+  const links = [
+    { id: 'sec-setup', label: 'פרטי האירוע' },
+    { id: 'sec-packs', label: 'חבילות' },
+    ...(p.setting ? [{ id: 'tableSec', label: 'עריכת שולחן' }] : []),
+    /* שם הסעודה מוגדר רק על הקבוצה הראשונה שלה — נושאים אותו הלאה,
+       אחרת שתי קבוצות "תוספות" בשבת נראות זהות */
+    ...(() => {
+      let meal = null;
+      return prog().groups
+        .filter(g => !(g.needs && !p[g.needs]))
+        .map(g => {
+          if (g.meal) meal = g.meal;
+          const label = meal && meal !== g.label ? `${meal} · ${g.label}` : g.label;
+          return { id: 'sec-' + g.key, label };
+        });
+    })(),
+  ];
+
+  host.innerHTML = `
+    <img class="nav-logo" src="img/brand/logo.webp" alt="ניחוחות השף">
+    <div class="nav-links">
+      ${links.map(l => `<button type="button" data-go="${l.id}">${l.label}</button>`).join('')}
+    </div>
+    <a class="nav-admin" href="admin.html" id="adminLink">ניהול הזמנות</a>`;
+
+  host.querySelectorAll('[data-go]').forEach(b =>
+    b.addEventListener('click', () => {
+      const t = document.getElementById(b.dataset.go);
+      if (!t) return;
+      const y = t.getBoundingClientRect().top + scrollY - (host.offsetHeight + 18);
+      scrollTo({ top: y, behavior: 'smooth' });
+    }));
+
+  watchSections(links);
+}
+
+/* מסמן את המקטע שנמצא כרגע מתחת לתפריט */
+let navObserver;
+function watchSections(links) {
+  navObserver?.disconnect();
+  const host = document.getElementById('navHost');
+  const seen = new Map();
+
+  navObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => seen.set(e.target.id, e.intersectionRatio));
+    let best = null, bestRatio = 0;
+    seen.forEach((r, id) => { if (r > bestRatio) { bestRatio = r; best = id; } });
+    if (!best) return;
+    host.querySelectorAll('[data-go]').forEach(b => {
+      const on = b.dataset.go === best;
+      b.classList.toggle('on', on);
+      if (on) b.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+    });
+  }, { threshold: [0, .15, .35, .6], rootMargin: '-90px 0px -55% 0px' });
+
+  links.forEach(l => {
+    const t = document.getElementById(l.id);
+    if (t) navObserver.observe(t);
+  });
+}
+
 /* ---------- מקטע החבילות ---------- */
 function buildPacks() {
   const host = document.getElementById('packHost');
@@ -265,18 +333,60 @@ function buildPacks() {
 function buildOrder() {
   const root = document.getElementById('order');
 
+  /* תפריט ניווט דביק — חייב לשבת לפני מקטע ההזמנה בעץ ה-DOM,
+     אחרת sticky לא מדביק אותו לראש העמוד אלא משאיר אותו בתחתית */
+  const nav = el('nav', 'navbar');
+  nav.id = 'navHost';
+  root.parentNode.insertBefore(nav, root);
+
   root.appendChild(el('div', 'sec-head', `
     <p class="eyebrow">בניית הזמנה</p>
     <h2 class="sec-title">מרכיבים את האירוע</h2>
   `));
 
+  /* --- פרטי האירוע --- */
   const setup = el('div', 'setup');
+  setup.id = 'sec-setup';
   setup.innerHTML = `
+    <label class="field">
+      <span>שם המזמין</span>
+      <input type="text" class="txt" data-d="name" autocomplete="name" placeholder="שם מלא">
+    </label>
+
+    <label class="field">
+      <span>סוג האירוע</span>
+      <select class="txt" data-d="type">
+        <option value="">בחרו סוג אירוע</option>
+        ${EVENT_TYPES.map(t => `<option value="${t}">${t}</option>`).join('')}
+      </select>
+    </label>
+
+    <label class="field other-f" hidden>
+      <span>פרטו</span>
+      <input type="text" class="txt" data-d="typeOther" placeholder="איזה אירוע?">
+    </label>
+
+    <label class="field">
+      <span>תאריך האירוע</span>
+      <input type="date" class="txt" data-d="date">
+    </label>
+
+    <label class="field">
+      <span>שעת האירוע</span>
+      <input type="time" class="txt" data-d="time" step="300">
+    </label>
+
+    <label class="field">
+      <span>מיקום האירוע</span>
+      <input type="text" class="txt" data-d="place" placeholder="אולם / כתובת / יישוב">
+    </label>
+
     <label class="field">
       <span>מספר סועדים</span>
       <input type="number" id="guests" min="${MIN_GUESTS}" step="1" value="${state.guests}" inputmode="numeric">
       <small>מינימום ${MIN_GUESTS} סועדים</small>
     </label>
+
     <div class="field">
       <span>מועד האירוע</span>
       <div class="seg" role="group" aria-label="מועד האירוע">
@@ -287,8 +397,11 @@ function buildOrder() {
     </div>`;
   root.appendChild(setup);
 
-  root.appendChild(el('h3', 'grp-title', 'בחירת חבילה'));
-  root.appendChild(el('div', null, '<div id="packHost"></div>'));
+  const packBox = el('div', 'grp');
+  packBox.id = 'sec-packs';
+  packBox.appendChild(el('h3', 'grp-title', 'בחירת חבילה'));
+  packBox.appendChild(el('div', null, '<div id="packHost"></div>'));
+  root.appendChild(packBox);
 
   /* עריכת שולחן */
   const tsec = el('section', 'tset');
@@ -301,10 +414,12 @@ function buildOrder() {
       <button type="button" data-mode="open">בקשה חופשית</button>
     </div>
     <div class="items tset-panel" data-panel="preset">
-      ${TABLES.map(t => `
-        <div class="item" role="button" tabindex="0" data-table="${t.id}">
+      ${[PORCELAIN_TABLE, ...TABLES].map(t => `
+        <div class="item${t.requiresPkg ? ' item-up' : ''}" role="button" tabindex="0" data-table="${t.id}">
           ${media(t)}
           <span class="item-t">${t.name}</span>
+          ${t.note ? `<span class="item-n">${t.note}</span>` : ''}
+          ${t.requiresPkg ? `<span class="item-x up-note">משדרג לחבילת פורצלן</span>` : ''}
           <span class="item-tick" aria-hidden="true"></span>
         </div>`).join('')}
     </div>
@@ -326,7 +441,11 @@ function buildOrder() {
   root.appendChild(el('div', null, '<div id="menuHost"></div>'));
 
   root.addEventListener('click', onClick);
+  root.addEventListener('change', e => {
+    if (e.target.dataset?.d) { state.details[e.target.dataset.d] = e.target.value; render(); }
+  });
   root.addEventListener('input', e => {
+    if (e.target.dataset?.d) { state.details[e.target.dataset.d] = e.target.value; render(); }
     if (e.target.id === 'tableText') { state.table.text = e.target.value; render(); }
     if (e.target.id === 'guests') {
       state.guests = Math.max(MIN_GUESTS, parseInt(e.target.value || '0', 10) || MIN_GUESTS);
@@ -373,6 +492,7 @@ function buildOrder() {
   initSelections();
   buildPacks();
   buildMenu();
+  buildNav();
   render();
 }
 
@@ -417,10 +537,26 @@ function buildSummary() {
   const bar = el('div', 'summary');
   bar.id = 'summary';
   bar.innerHTML = `
-    <div class="sum-l"><b id="sumTotal">—</b><span id="sumPer">—</span></div>
-    <button type="button" class="sum-btn" id="sendBtn">שליחת ההזמנה</button>`;
+    <div class="sum-sheet" id="sumSheet" hidden></div>
+    <div class="sum-row">
+      <button type="button" class="sum-l" id="sumToggle" aria-expanded="false">
+        <b id="sumTotal">—</b>
+        <span id="sumPer">—</span>
+        <i class="sum-chev" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="sum-btn" id="sendBtn">שליחת ההזמנה</button>
+    </div>`;
   document.body.appendChild(bar);
   document.getElementById('sendBtn').addEventListener('click', sendOrder);
+
+  document.getElementById('sumToggle').addEventListener('click', () => {
+    const sheet = document.getElementById('sumSheet');
+    const btn = document.getElementById('sumToggle');
+    sheet.hidden = !sheet.hidden;
+    btn.setAttribute('aria-expanded', String(!sheet.hidden));
+    btn.classList.toggle('open', !sheet.hidden);
+    renderSheet();
+  });
 }
 
 /* ---------- אירועים ---------- */
@@ -443,7 +579,7 @@ function onClick(e) {
   if (z) {
     const card = z.closest('[data-grp],[data-table]');
     return card.dataset.table
-      ? openLightbox(TABLES.find(t => t.id === card.dataset.table))
+      ? openLightbox(tableById(card.dataset.table))
       : openLightbox(itemOf(card.dataset.grp, card.dataset.id));
   }
 
@@ -455,11 +591,13 @@ function onClick(e) {
     initSelections();
     buildPacks();
     buildMenu();
+    buildNav();
     return render();
   }
 
+  /* החבילה קובעת אילו מקטעים קיימים, ולכן גם את הניווט */
   const pack = c('[data-pkg]');
-  if (pack) { state.pkg = Number(pack.dataset.pkg); return render(); }
+  if (pack) { state.pkg = Number(pack.dataset.pkg); render(); return buildNav(); }
 
   const mode = c('[data-mode]');
   if (mode) { state.table.mode = mode.dataset.mode; return render(); }
@@ -467,7 +605,18 @@ function onClick(e) {
   const tbl = c('[data-table]');
   if (tbl) {
     const id = tbl.dataset.table;
-    state.table.preset = state.table.preset === id ? null : id;
+    const chosen = state.table.preset === id ? null : id;
+    state.table.preset = chosen;
+
+    /* עריכת פורצלן קיימת רק בחבילה שמגישה בפורצלן — בוחרים אותה, מקבלים אותה.
+       בשבת אין חבילת פורצלן, ולכן שם אין למה לשדרג. */
+    const t = tableById(id);
+    const target = t?.requiresPkg && prog().packages.find(p => p.id === t.requiresPkg);
+    if (chosen && target?.setting === 'פורצלן') {
+      state.pkg = target.id;
+      render();
+      return buildNav();
+    }
     return render();
   }
 
@@ -587,7 +736,15 @@ function render() {
   document.querySelectorAll('[data-color]').forEach(b => b.classList.toggle('on', tb.colors.has(b.dataset.color)));
 
   const sEl = document.querySelector('[data-setting]');
-  if (sEl) sEl.textContent = `${p.setting} · ${tableSummary()}`;
+  if (sEl) {
+    /* לא חוזרים על אותה מילה פעמיים כשהעיצוב הנבחר הוא הפורצלן עצמו */
+    const ts = tableSummary();
+    sEl.textContent = ts === p.setting ? ts : `${p.setting} · ${ts}`;
+  }
+
+  /* שדה "פרטו" נפתח רק כשנבחר "אחר" */
+  const otherF = document.querySelector('.other-f');
+  if (otherF) otherF.hidden = state.details.type !== 'אחר';
 
   /* מספרים שתלויים בכמות הסועדים */
   document.querySelectorAll('[data-guestn]').forEach(n => n.textContent = state.guests);
@@ -600,13 +757,114 @@ function render() {
     `${money(t.per)} × ${state.guests} סועדים` +
     (t.units ? ` · תוספות ${money(t.units)}` : '') +
     (state.program === 'shabbat' ? ' · שבת' : '');
+
+  renderSheet();
 }
 
 /* ---------- טקסט ההזמנה ---------- */
+/* ---------- סל ההזמנה ---------- */
+function renderSheet() {
+  const sheet = document.getElementById('sumSheet');
+  if (!sheet || sheet.hidden) return;
+
+  const d = state.details, p = pkgOf(), t = totals();
+  const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+  /* פרטי האירוע — רק מה שכבר מולא */
+  const facts = [
+    ['שם', d.name], ['אירוע', eventType()],
+    ['תאריך', d.date ? dateHe(d.date) + (d.time ? ` · ${d.time}` : '') : ''],
+    ['מיקום', d.place],
+  ].filter(([, v]) => String(v).trim());
+
+  /* מה נבחר בכל קבוצה */
+  let meal = null;
+  const rows = [];
+  for (const g of prog().groups) {
+    if (g.needs && !p[g.needs]) continue;
+    if (g.meal) meal = g.meal;
+
+    let names = [], count = '';
+    if (g.mode === 'bottles') {
+      names = MENU[g.key]
+        .filter(i => i.unlimited || qtyOf(g.key, i.id) > 0)
+        .map(i => (i.unlimited ? i.name : `${i.name} ×${qtyOf(g.key, i.id)}`));
+      count = `${bottlesChosen()}/${bottlesMax()}`;
+    } else if (g.mode === 'qty') {
+      names = MENU[g.key].filter(i => qtyOf(g.key, i.id) > 0).map(i => `${i.name} ×${qtyOf(g.key, i.id)}`);
+    } else {
+      names = MENU[g.key].filter(i => state.picks[g.key].has(i.id)).map(i => i.name);
+      count = `${names.length}/${g.pick}`;
+    }
+
+    const label = meal && meal !== g.label ? `${meal} · ${g.label}` : g.label;
+    const short = names.length > 4 ? names.slice(0, 4).join(', ') + ` ועוד ${names.length - 4}` : names.join(', ');
+    /* קבוצת רשות ריקה היא בחירה לגיטימית, לא חוסר */
+    const blank = g.mode === 'qty' ? 'ללא' : 'טרם נבחר';
+    rows.push({
+      label, count, blank,
+      short: names.length ? short : blank,
+      empty: names.length === 0,
+      missing: names.length === 0 && g.mode === 'pick',
+      full: g.pick ? names.length === g.pick : true,
+    });
+  }
+
+  const addons = prog().addons.filter(a => state.addons.has(a.id));
+
+  sheet.innerHTML = `
+    <div class="sheet-in">
+      ${facts.length ? `<div class="sheet-facts">
+        ${facts.map(([k, v]) => `<span><i>${k}</i>${esc(v)}</span>`).join('')}
+      </div>` : ''}
+
+      <div class="sheet-pkg">
+        <b>${esc(p.name)}</b>
+        <span>${money(p.price)} לסועד · ${state.guests} סועדים · ${prog().label}</span>
+        ${p.setting ? `<span>עריכת שולחן ${esc(p.setting)} — ${esc(tableSummary())}</span>` : ''}
+      </div>
+
+      <ul class="sheet-rows">
+        ${rows.map(r => `
+          <li class="${r.empty ? 'empty' : ''}${r.full ? ' full' : ''}${r.missing ? ' missing' : ''}">
+            <span class="sr-k">${esc(r.label)}${r.count ? ` <em class="frac">${r.count}</em>` : ''}</span>
+            <span class="sr-v">${esc(r.short)}</span>
+          </li>`).join('')}
+        ${addons.length ? `<li class="full">
+          <span class="sr-k">תוספות</span>
+          <span class="sr-v">${addons.map(a => esc(a.name)).join(', ')}</span>
+        </li>` : ''}
+      </ul>
+
+      <dl class="sheet-price">
+        <div><dt>חבילה</dt><dd>${money(p.price)} × ${state.guests}</dd></div>
+        ${t.per !== p.price ? `<div><dt>תוספות לסועד</dt><dd>${money(t.per - p.price)} × ${state.guests}</dd></div>` : ''}
+        ${t.units ? `<div><dt>תוספות לפי כמות</dt><dd>${money(t.units)}</dd></div>` : ''}
+        <div class="tot"><dt>סה״כ</dt><dd>${money(t.total)}</dd></div>
+      </dl>
+    </div>`;
+}
+
+/* כל עריכות השולחן — כולל הפורצלן שמופיע ראשון */
+const allTables = () => [PORCELAIN_TABLE, ...TABLES];
+const tableById = id => allTables().find(t => t.id === id);
+
+/* ---------- פרטי האירוע ---------- */
+const eventType = () => {
+  const d = state.details;
+  return d.type === 'אחר' ? (d.typeOther.trim() || 'אחר') : d.type;
+};
+
+const dateHe = iso => {
+  if (!iso) return '—';
+  const [y, m, day] = iso.split('-');
+  return `${day}/${m}/${y}`;
+};
+
 function tableSummary() {
   const tb = state.table;
   if (tb.mode === 'preset') {
-    const t = TABLES.find(x => x.id === tb.preset);
+    const t = tableById(tb.preset);
     return t ? t.name : 'טרם נבחר';
   }
   if (tb.mode === 'custom') {
@@ -653,8 +911,14 @@ function orderText() {
   const addons = prog().addons.filter(a => state.addons.has(a.id))
     .map(a => `${a.name} (+${money(a.price)} לסועד)`);
 
+  const d = state.details;
   return [
-    'הזמנת קייטרינג',
+    'הזמנת קייטרינג — ניחוחות השף',
+    `שם המזמין: ${d.name || '—'}`,
+    `סוג האירוע: ${eventType() || '—'}`,
+    `תאריך: ${dateHe(d.date)}${d.time ? ` · שעה ${d.time}` : ''}`,
+    `מיקום: ${d.place || '—'}`,
+    '',
     `מועד: ${prog().label}`,
     `סועדים: ${state.guests}`,
     `חבילה: ${p.name} — ${money(p.price)} לסועד`,
@@ -670,18 +934,78 @@ function orderText() {
 }
 
 function sendOrder() {
-  const missing = prog().groups
-    .filter(g => g.mode === 'pick' && state.picks[g.key].size < Math.min(g.pick, MENU[g.key].length))
-    .map(g => g.label);
+  const d = state.details;
+  const missing = [
+    ...[['name', 'שם המזמין'], ['type', 'סוג האירוע'], ['date', 'תאריך'],
+        ['time', 'שעה'], ['place', 'מיקום']]
+      .filter(([k]) => !String(d[k]).trim()).map(([, label]) => label),
+    ...prog().groups
+      .filter(g => g.mode === 'pick' && state.picks[g.key].size < Math.min(g.pick, MENU[g.key].length))
+      .map(g => g.label),
+  ];
 
   const btn = document.getElementById('sendBtn');
   if (missing.length) {
-    btn.textContent = 'חסרות בחירות: ' + missing.join(', ');
+    btn.textContent = 'חסר: ' + missing.slice(0, 3).join(', ') + (missing.length > 3 ? '…' : '');
     btn.classList.add('err');
-    setTimeout(() => { btn.textContent = 'שליחת ההזמנה'; btn.classList.remove('err'); }, 2600);
+    setTimeout(() => { btn.textContent = 'שליחת ההזמנה'; btn.classList.remove('err'); }, 2800);
     return;
   }
+
+  saveOrder();
   location.href = `https://wa.me/${WHATSAPP}?text=` + encodeURIComponent(orderText());
+}
+
+/* ---------- שמירת ההזמנה לפאנל הניהול ---------- */
+function saveOrder() {
+  const d = state.details;
+  const t = totals();
+
+  const lines = {};
+  for (const g of prog().groups) {
+    if (g.needs && !pkgOf()[g.needs]) continue;
+    const label = g.meal ? `${g.meal} · ${g.label}` : g.label;
+    if (g.mode === 'qty' || g.mode === 'bottles') {
+      const picked = MENU[g.key]
+        .filter(i => i.unlimited || qtyOf(g.key, i.id) > 0)
+        .map(i => (i.unlimited ? `${i.name} (ללא הגבלה)` : `${i.name} × ${qtyOf(g.key, i.id)}`));
+      if (picked.length) lines[label] = picked;
+    } else {
+      const names = MENU[g.key].filter(i => state.picks[g.key].has(i.id)).map(i => i.name);
+      if (names.length) lines[label] = names;
+    }
+  }
+
+  const rec = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    savedAt: new Date().toISOString(),
+    name: d.name.trim(),
+    type: eventType(),
+    date: d.date,
+    time: d.time,
+    place: d.place.trim(),
+    program: prog().label,
+    guests: state.guests,
+    pkg: pkgOf().name,
+    pkgPrice: pkgOf().price,
+    setting: pkgOf().setting ? `${pkgOf().setting} · ${tableSummary()}` : 'ללא',
+    waiters: pkgOf().waiters,
+    drinks: pkgOf().drinks,
+    addons: prog().addons.filter(a => state.addons.has(a.id)).map(a => a.name),
+    lines,
+    perGuest: t.per,
+    units: t.units,
+    total: t.total,
+    text: orderText(),
+  };
+
+  try {
+    const all = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]');
+    all.push(rec);
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(all));
+  } catch {
+    /* אחסון חסום או מלא — ההזמנה עדיין נשלחת בוואטסאפ */
+  }
 }
 
 buildOrder();

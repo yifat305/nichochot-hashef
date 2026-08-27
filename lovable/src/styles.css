@@ -1,0 +1,153 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * ניחוחות השף — מערכת העיצוב.
+ *
+ * האתר מחויב למראה אחד: קרם חם על שחור־כחלחל, בלי מצב בהיר.
+ * לכן :root ו-.dark מגדירים את אותם ערכים — כדי שהעמוד ייראה נכון
+ * גם אם משהו במארח מחליף מצב.
+ *
+ * כל הצבעים ב-oklch, לפי מוסכמת הפרויקט.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-gold: var(--gold);
+  --font-sans: var(--font-sans);
+}
+
+:root,
+.dark {
+  --radius: 0.875rem;
+
+  /* קרם על דיו */
+  --background: oklch(0.145 0.005 265);
+  --foreground: oklch(0.951 0.012 85);
+
+  --card: oklch(0.185 0.005 265);
+  --card-foreground: oklch(0.951 0.012 85);
+  --popover: oklch(0.185 0.005 265);
+  --popover-foreground: oklch(0.951 0.012 85);
+
+  --primary: oklch(0.951 0.012 85);
+  --primary-foreground: oklch(0.145 0.005 265);
+
+  --secondary: oklch(0.215 0.005 265);
+  --secondary-foreground: oklch(0.951 0.012 85);
+
+  --muted: oklch(0.215 0.005 265);
+  --muted-foreground: oklch(0.951 0.012 85 / 62%);
+
+  --accent: oklch(0.215 0.005 265);
+  --accent-foreground: oklch(0.951 0.012 85);
+
+  --destructive: oklch(0.62 0.2 25);
+  --destructive-foreground: oklch(0.951 0.012 85);
+
+  --border: oklch(0.951 0.012 85 / 16%);
+  --input: oklch(0.951 0.012 85 / 22%);
+  --ring: oklch(0.951 0.012 85 / 55%);
+
+  /* זהב הלוגו — לשימוש נקודתי */
+  --gold: oklch(0.73 0.13 88);
+
+  --font-sans: "Lachish", system-ui, sans-serif;
+}
+
+/* ---------- FUP Lachish ---------- */
+@font-face {
+  font-family: "Lachish";
+  src: url("https://cdn.jsdelivr.net/gh/yifat305/nichochot-hashef@main/site/fonts/Lachish-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lachish";
+  src: url("https://cdn.jsdelivr.net/gh/yifat305/nichochot-hashef@main/site/fonts/Lachish-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lachish";
+  src: url("https://cdn.jsdelivr.net/gh/yifat305/nichochot-hashef@main/site/fonts/Lachish-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lachish";
+  src: url("https://cdn.jsdelivr.net/gh/yifat305/nichochot-hashef@main/site/fonts/Lachish-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lachish";
+  src: url("https://cdn.jsdelivr.net/gh/yifat305/nichochot-hashef@main/site/fonts/Lachish-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-weight: 400;
+    overflow-x: hidden;
+  }
+
+  /* מספרים ביחס "נבחר / מתוך" לא מתהפכים ב-RTL */
+  [dir="rtl"] .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* חץ הגלילה על הסרטון */
+@keyframes cue {
+  0% { opacity: 0; transform: translateY(0); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(14px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

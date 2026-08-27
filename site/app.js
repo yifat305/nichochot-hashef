@@ -39,6 +39,7 @@ class Stage {
         <img class="still" src="${base}/poster.webp" alt="${this.r.title}">
         <canvas class="film" aria-hidden="true"></canvas>
         <div class="shade"></div>
+        <div class="logo-glow" aria-hidden="true"></div>
         <img class="brand-logo" src="img/brand/logo.webp" alt="ניחוחות השף — קייטרינג ואירוח">
         <div class="ui">
           <h1 class="title">${this.r.title}</h1>
