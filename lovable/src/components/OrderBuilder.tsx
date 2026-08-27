@@ -32,6 +32,7 @@ export function OrderBuilder() {
   const [tableText, setTableText] = useState("");
   const [zoom, setZoom] = useState<Item | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [showBasket, setShowBasket] = useState(false);
   const [active, setActive] = useState<string>("");
   const [details, setDetails] = useState({
     name: "", date: "", time: "", place: "", type: "", typeOther: "",
@@ -102,6 +103,26 @@ export function OrderBuilder() {
     });
     return () => io.disconnect();
   }, [sections]);
+
+  /* הסל נסגר גם ב-Escape וגם בלחיצה מחוץ לו — לא רק בכפתור */
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setSheetOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [sheetOpen]);
+
+  /* הכפתור הצף מופיע רק כשמגיעים למקטע ההזמנה */
+  useEffect(() => {
+    const el = document.getElementById("sec-setup");
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([e]) => setShowBasket(e.boundingClientRect.top < window.innerHeight * 0.6),
+      { threshold: 0, rootMargin: "0px 0px -40% 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   function goTo(id: string) {
     const t = document.getElementById(id);
@@ -626,38 +647,53 @@ export function OrderBuilder() {
         </div>
       </section>
 
-      {/* כפתור הסל הצף — נספר בו כמה פריטים כבר נבחרו */}
+      {/* כפתור הסל הצף.
+          זהב מלא ולא עיגול כהה — על רקע וידאו כהה הוא היה נבלע.
+          מופיע רק אחרי שגוללים אל ההזמנה, כי מעל הסרטון אין לו עדיין תוכן. */}
       <button
         type="button"
         onClick={() => setSheetOpen(true)}
         aria-label={`סל ההזמנה — ${chosenCount} פריטים`}
-        className={`fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] end-[clamp(1rem,5vw,3rem)] z-40 grid h-14 w-14 place-items-center rounded-full border border-border bg-background/90 shadow-[0_10px_30px_rgba(0,0,0,.45)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-[#f0d795] ${
-          sheetOpen ? "pointer-events-none scale-90 opacity-0" : "opacity-100"
+        className={`fixed bottom-[calc(env(safe-area-inset-bottom,0px)+6.5rem)] end-[clamp(1rem,5vw,3rem)] z-50 flex h-16 items-center gap-2.5 rounded-full bg-[#f0d795] px-5 text-background shadow-[0_12px_36px_rgba(0,0,0,.55)] transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_16px_44px_rgba(0,0,0,.6)] ${
+          sheetOpen || !showBasket
+            ? "pointer-events-none translate-y-4 scale-90 opacity-0"
+            : "translate-y-0 scale-100 opacity-100"
         }`}
       >
-        <ShoppingBasket className="h-6 w-6" strokeWidth={1.6} />
-        {chosenCount > 0 && (
-          <span className="absolute -end-1 -top-1 grid min-w-[22px] place-items-center rounded-full bg-[#f0d795] px-1.5 text-[.72rem] font-medium tabular-nums text-background">
-            {chosenCount}
-          </span>
-        )}
+        <ShoppingBasket className="h-7 w-7" strokeWidth={1.8} />
+        <span className="flex flex-col items-start leading-none">
+          <b className="text-[.95rem] font-medium">הסל שלי</b>
+          <i className="mt-0.5 text-[.72rem] not-italic opacity-70">{chosenCount} פריטים</i>
+        </span>
       </button>
 
-      {/* סרגל הסיכום + סל ההזמנה */}
-      <div className="fixed inset-x-0 bottom-0 z-40 rounded-t-[20px] border-t border-border bg-background/95 px-[clamp(1rem,5vw,3rem)] py-4 backdrop-blur-xl">
-        {sheetOpen && (
-          <div className="mb-4 max-h-[min(58vh,540px)] overflow-y-auto border-b border-border pb-4">
+      {/* סל ההזמנה — חלון ממורכז, לא רצועה על כל הרוחב.
+          לחיצה על הרקע סוגרת, וגם Escape. */}
+      {sheetOpen && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/55 p-4 backdrop-blur-sm"
+          onClick={() => setSheetOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="סל ההזמנה"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="flex w-[clamp(320px,30vw,560px)] max-w-[92vw] flex-col rounded-[20px] border border-border bg-background/95 p-5 shadow-[0_24px_70px_rgba(0,0,0,.6)] backdrop-blur-2xl"
+          >
+            {/* הכותרת מחוץ לאזור הנגלל — אחרת כפתור הסגירה נעלם בגלילה */}
             <div className="mb-4 flex items-center justify-between gap-3">
               <span className="flex items-center gap-2.5 text-[.95rem] font-medium">
                 <ShoppingBasket className="h-5 w-5" strokeWidth={1.6} />
                 סל ההזמנה
               </span>
-              <button type="button" onClick={() => setSheetOpen(false)} aria-label="סגירת הסל"
-                className="grid h-8 w-8 place-items-center rounded-full border border-border transition hover:bg-foreground hover:text-background">
+              <button type="button" onClick={() => setSheetOpen(false)}
+                className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-[.84rem] transition hover:bg-foreground hover:text-background">
+                המשך בהזמנה
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="flex flex-col gap-[1.1rem]">
+            <div className="flex max-h-[min(62vh,560px)] flex-col gap-[1.1rem] overflow-y-auto">
               {[["שם", details.name], ["אירוע", eventType()],
                 ["תאריך", details.date ? dateHe(details.date) + (details.time ? ` · ${details.time}` : "") : ""],
                 ["מיקום", details.place]].filter(([, v]) => String(v).trim()).length > 0 && (
@@ -713,8 +749,11 @@ export function OrderBuilder() {
               </dl>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
+      {/* סרגל הסיכום */}
+      <div className="fixed inset-x-0 bottom-0 z-40 rounded-t-[20px] border-t border-border bg-background/95 px-[clamp(1rem,5vw,3rem)] py-4 backdrop-blur-xl">
         <div className="flex items-center justify-between gap-4">
           <span className="flex flex-col">
             <b className="text-[clamp(1.3rem,3.4vw,1.9rem)] font-medium tabular-nums">{money(totals.total)}</b>
