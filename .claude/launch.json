@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "pastel-site",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["site/server.js"],
+      "port": 5177
+    }
+  ]
+}
