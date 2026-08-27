@@ -19,6 +19,15 @@ export const PHONE = "053-443-5123";
 export const WHATSAPP = "972534435123";
 export const EMAIL = "Y0534435123@gmail.com";
 
+export const EVENT_TYPES = [
+  "בר מצווה", "בת מצווה", "ברית", "בריתה",
+  "שבת חתן", "אירוסין", "אזכרה", "אחר",
+] as const;
+
+/** ⚠️ הקוד רץ בדפדפן ולכן גלוי במקור העמוד — חסימה נוחה, לא אבטחה */
+export const ORDERS_KEY = "nichochot-orders";
+export const ADMIN_PIN = "2809";
+
 /** בקבוק אחד לכל 4 סועדים, ועוד 4 ספייר — וזו גם המכסה העליונה */
 export const GUESTS_PER_BOTTLE = 4;
 export const BOTTLE_SPARE = 4;
@@ -217,6 +226,15 @@ export const PROGRAMS: Record<"weekday" | "shabbat", Program> = {
   },
 };
 
+/* --- עריכת שולחן שמחייבת חבילת פורצלן --- */
+export const PORCELAIN_TABLE: Item & { requiresPkg: number } = {
+  id: "porcelain",
+  name: "פורצלן",
+  note: "כלים וסכו״ם מוזהב",
+  img: `${ASSETS}/img/tables/porcelain.webp`,
+  requiresPkg: 3,
+};
+
 /* --- עריכות שולחן --- */
 export const TABLES: Item[] = [
   { id: "black-gold", name: "שחור וזהב", img: `${ASSETS}/img/tables/black-gold.webp` },
@@ -245,3 +263,54 @@ export const COLORS = [
 ];
 
 export const money = (n: number) => n.toLocaleString("he-IL") + " " + CURRENCY;
+
+/** כל עריכות השולחן — הפורצלן ראשון */
+export const ALL_TABLES: Item[] = [PORCELAIN_TABLE, ...TABLES];
+export const tableById = (id: string | null) => ALL_TABLES.find((t) => t.id === id);
+
+export const dateHe = (iso: string) => {
+  if (!iso) return "—";
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+};
+
+/* ---------- הזמנות שמורות ---------- */
+export type SavedOrder = {
+  id: string;
+  savedAt: string;
+  status?: "new" | "progress" | "done";
+  name: string;
+  type: string;
+  date: string;
+  time: string;
+  place: string;
+  program: string;
+  guests: number;
+  pkg: string;
+  pkgPrice: number;
+  setting: string;
+  waiters: boolean;
+  drinks: boolean;
+  addons: string[];
+  lines: Record<string, string[]>;
+  perGuest: number;
+  units: number;
+  total: number;
+  text: string;
+};
+
+export function loadOrders(): SavedOrder[] {
+  try {
+    return JSON.parse(localStorage.getItem(ORDERS_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+export function saveOrders(list: SavedOrder[]) {
+  try {
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(list));
+  } catch {
+    /* אחסון חסום או מלא — ההזמנה עדיין נשלחת בוואטסאפ */
+  }
+}

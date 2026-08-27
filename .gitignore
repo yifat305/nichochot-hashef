@@ -12,3 +12,6 @@ desktop.ini
 
 # תלויות
 node_modules/
+
+# חבילת נכסים שנזנחה — הכל מוגש היום מ-site/
+/assets-repo
